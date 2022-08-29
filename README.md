@@ -19,6 +19,7 @@ In your preferred terminal.
 1. git clone this repository.
 2. In the HTTP-FileHosting directory, run ```javac com/serv/*.java```
 3. Finally, run the output with: ```java -cp ./com/serv;. com.serv.HTTPServer```
+
 With that, the server is up and running! You can access it via entering ```localhost:3000``` in your preferred browser.\
 To access the server from another device on the same or different network enter in your browser: ```IPV4:3000``` or ```[IPV6]:3000``` with the "IP" being the router's public IP V4/V6 address\
 Alternatively, you can have it hosted and associated with a domain name.\
