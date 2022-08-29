@@ -7,23 +7,30 @@ function AddLine(id, text) {
 	element.appendChild(node);
 }
 
-function readTree(id, root, depth) {
-	let element = document.getElementById(id);
-	let node1 = document.createElement("li");
+function readTree(txtBlk, root, depth) {
+	//let element = document.getElementById(id);
+	//let node1 = document.createElement("li");
+	txtBlk += "<li>"
 	let str = "";
+	/*
 	for (let x = 0; x < depth; x++) {
 		str += "--";
 	}
-	node1.innerText = "" + str + root.name;
-	element.appendChild(node1);
+	*/
+	txtBlk += str + root.name;
+	//id.appendChild(node1);
 	if (typeof root === 'object' && !Array.isArray(root) && root !== null && root.hasOwnProperty('list')) {
 		for (let i = 0; i < root.list.length; i++) {
 			depth += 1;
-			readTree(id, root.list[i], depth);
+			txtBlk += "<ul>"
+			txtBlk = readTree(txtBlk, root.list[i], depth);
 			depth -= 1;
+			txtBlk += "</ul>"
 			
 		}
 	}
+	txtBlk += "</li>"
+	return txtBlk;
 }
 
 function request() {
@@ -104,7 +111,13 @@ function RequestFileList(fileName) {
 			console.log(val);
 			FileTree = data;
 			let deep = 0;
-			readTree("fileBlock", FileTree, deep);
+			let element = document.getElementById("fileBlock");
+			let blk = document.createElement("div");
+			let htmltxtblk = "";
+			htmltxtblk = readTree(htmltxtblk, FileTree, deep);
+			blk.innerHTML = htmltxtblk;
+			console.log(htmltxtblk);
+			element.append(blk);
 		}
 	};
 	xhr.send(200);

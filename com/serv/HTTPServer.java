@@ -28,6 +28,7 @@ public class HTTPServer implements Runnable {
 	// port to listen connection
 	static final int PORT = 3000;
 	static int fileCount = 0;
+	static int counter = 0;
 	
 	// verbose mode
 	static final boolean verbose = true;
@@ -153,6 +154,7 @@ public class HTTPServer implements Runnable {
 						out.flush();
 						String fod = fileRequested.substring(13, fileRequested.length());
 						System.out.println("reading folder: " + fod);
+						HTTPServer.counter = 0;
 						FNode fileList = ReadFilesInDir(fod);
 						//printFNode(fileList);
 						String JsonParsedTree = "";
@@ -300,14 +302,14 @@ public class HTTPServer implements Runnable {
 		} else {
 			folder = new File(path);
 		}
-		FNode root = new FNode(folder.getName(), fileCount++);
+		FNode root = new FNode(folder.getName(), HTTPServer.fileCount++);
 		//List<String> FileList = new ArrayList<String>();
 		File[] listOfFiles = folder.listFiles();
 		for (int i = 0; i < listOfFiles.length; i++) {
 			if (listOfFiles[i].isFile()) {
 				System.out.println("File " + listOfFiles[i].getName());
 				//FileList.add(listOfFiles[i].getName());
-				root.appendStr(listOfFiles[i].getName(), fileCount++);
+				root.appendStr(listOfFiles[i].getName(), HTTPServer.fileCount++);
 			} else if (listOfFiles[i].isDirectory()) {
 				System.out.println("Directory " + listOfFiles[i].getName());
 				System.out.println("Directory path: " + listOfFiles[i].getAbsolutePath());
@@ -322,26 +324,26 @@ public class HTTPServer implements Runnable {
 		System.out.println(root.name);
 		for (int i = 0; i < root.children.size(); i++) {
 			printFNode(root.children.get(i));
-        }
+		}
 	}
 	
 	private String FNodetoJson(FNode root) {
 		String listed = "";
-		listed += "{\"name\":\"" + root.name + "\"," + "\"list\":[";
+		listed += "{\"name\":\"" + root.name + "\"," + "\"val\":\"" + (HTTPServer.counter++) + "\"," + "\"list\":[";
 		if (root.children.size() != 0) {
 			for (int i = 0; i < root.children.size()-1; i++) {
 				FNode Node = root.children.get(i);
 				if (Node.hasChildren) {
 					listed += FNodetoJson(Node) + ", ";
 				} else {
-				listed += "{\"name\":" + "\"" + Node.name + "\"" + "},";
+				listed += "{\"name\":" + "\"" + Node.name + "\"," + "\"val\":\"" + (HTTPServer.counter++) + "\"" + "},";
 				}
 			}
 			//last one
 			if (root.children.get(root.children.size()-1).hasChildren) {
 				listed += FNodetoJson(root.children.get(root.children.size()-1));
 			} else {
-				listed += "{\"name\":" + "\"" + root.children.get(root.children.size()-1).name + "\"}";
+				listed += "{\"name\":" + "\"" + root.children.get(root.children.size()-1).name + "\"," + "\"val\":\"" + (HTTPServer.counter++) + "\"}";
 			}
 			listed += "]}";
 		}
