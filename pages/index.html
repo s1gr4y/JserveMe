@@ -6,18 +6,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Head of Page</title>
 	<link rel="stylesheet" href="css/style.css">
+	<link rel="stylesheet" href="css/jsLists.css"/>	<!--<link rel="stylesheet" href="css/jsLists.css"/>-->
 </head>
 
 <body>
-	<div class="container">
-		<h1>File Directory</h1>
-		<div id="fileBlock">
-		
+	<div class="container">		
+		<h1>About</h1>
+		<div class="about">
+			<p>Welcome to my instance of JserveMe!</p>
+			<p>Click the "data" folder to expand it and view its contents.</p>
+			<p>
+				To download the files you see, simply click on the text of the file, or
+				you can also get the file by entering the path relative to "data/" and the file at the end (e.g: folder/file).
+			</p>
+			<p>Note: You can not download the whole folder but only individual files at the moment</p>
+			<p style="text-align: center; ">Enjoy!</p>
 		</div>
-
-		<input type="text" id="user_inp" placeholder='FileName to download'; autocomplete="off" maxlength="90"></input>
+		<h1>File Directory</h1>
+		<ul id="fileBlock" class="jslists">
+		
+		</ul>
+		<input type="text" id="user_inp" placeholder='FileName to download (ex: folder/file.extention)'; autocomplete="off" maxlength="90"></input>
 	</div>
 </body>
 <script src="scripts/response.js"></script>
-
+<script src="scripts/jsLists.js"></script>	<!--helper js for the UI--> <!--<script src="scripts/jsLists.js"></script>-->
+		<script>
+			// JSLists.createTree("simple_list");
+			//JSLists.createTree("fileList");
+			//JSLists.createTree("dirList");
+		</script>
 </html>

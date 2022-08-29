@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.Reader;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Date;
@@ -75,9 +76,9 @@ public class HTTPServer implements Runnable {
 		try {
 			inputStream = connect.getInputStream(); 
 			outputStream = connect.getOutputStream();
-			// we read characters from the client via input stream on the socket
-			in = new BufferedReader(new InputStreamReader(inputStream));
-			// we get character output stream to client (for headers)
+			//read characters from the client via input stream on the socket (changed in favor of scanner)
+			//in = new BufferedReader(new InputStreamReader(inputStream));
+			//get character output stream to client (for headers)
 			out = new PrintWriter(outputStream);
 			// get binary output stream to client (for requested data)
 			dataOut = new BufferedOutputStream(outputStream);
@@ -90,19 +91,18 @@ public class HTTPServer implements Runnable {
 			System.out.println("got: " + s);
 			
 			
-			// get first line of the request from the client
+			//get first line of the request from the client
 			String input = scanner.nextLine();
-			// we parse the request with a string tokenizer
+			//we parse the request with a string tokenizer
 			StringTokenizer parse = new StringTokenizer(input);
 			System.out.println("Input was: " + input);
-			String method = parse.nextToken().toUpperCase(); // we get the HTTP method of the client
+			String method = parse.nextToken().toUpperCase();
 			System.out.println("method was: " + method);
 			// we get file requested
 			fileRequested = parse.nextToken().toLowerCase();
 			System.out.println("file was: " + fileRequested);
 			
 			
-			// we support only GET and HEAD methods, we check
 			if (!method.equals("POST") && !method.equals("GET") && !method.equals("HEAD")) {
 				if (verbose) {
 					System.out.println("501 Not Implemented : " + method + " method.");
@@ -157,6 +157,7 @@ public class HTTPServer implements Runnable {
 						System.out.println("reading folder: " + fod);
 						HTTPServer.fileCount = 0;
 						this.fileList = ReadFilesInDir(fod);
+						//printFNode(fileList);
 						HTTPServer.counter = 0;
 						//printFNode(this.fileList);
 						String JsonParsedTree = "";
@@ -261,11 +262,11 @@ public class HTTPServer implements Runnable {
 			System.err.println("Server error : " + ioe);
 		} finally {
 			try {
-				in.close();
+				//in.close();
 				out.close();
 				jsonOut.close();
 				dataOut.close();
-				connect.close(); // we close socket connection
+				connect.close(); //close socket connection
 			} catch (Exception e) {
 				System.err.println("Error closing stream : " + e.getMessage());
 			} 
@@ -332,14 +333,19 @@ public class HTTPServer implements Runnable {
 		} else {
 			folder = new File(path);
 		}
-		FNode root = new FNode(folder.getName(), HTTPServer.fileCount++, folder.getAbsolutePath());
+		boolean isDir = false;
+		if (folder.isDirectory()) {
+			isDir = true;
+		}
+		//System.out.println(path + " is " + isDir);
+		FNode root = new FNode(folder.getName(), HTTPServer.fileCount++, folder.getAbsolutePath(), isDir);
 		//List<String> FileList = new ArrayList<String>();
 		File[] listOfFiles = folder.listFiles();
 		for (int i = 0; i < listOfFiles.length; i++) {
 			if (listOfFiles[i].isFile()) {
 				System.out.println("File " + listOfFiles[i].getName());
 				//FileList.add(listOfFiles[i].getName());
-				root.appendStr(listOfFiles[i].getName(), HTTPServer.fileCount++, listOfFiles[i].getAbsolutePath());
+				root.appendStr(listOfFiles[i].getName(), HTTPServer.fileCount++, listOfFiles[i].getAbsolutePath(), false);
 			} else if (listOfFiles[i].isDirectory()) {
 				System.out.println("Directory " + listOfFiles[i].getName());
 				System.out.println("Directory path: " + listOfFiles[i].getAbsolutePath());
@@ -351,7 +357,7 @@ public class HTTPServer implements Runnable {
 	}
 	
 	private void printFNode(FNode root) {
-		System.out.println(root.name);
+		System.out.println(root.name + " is it a dir? " + root.isDir);
 		for (int i = 0; i < root.children.size(); i++) {
 			printFNode(root.children.get(i));
 		}
@@ -375,21 +381,22 @@ public class HTTPServer implements Runnable {
 	
 	private String FNodetoJson(FNode root) {
 		String listed = "";
-		listed += "{\"name\":\"" + root.name + "\"," + "\"val\":\"" + (HTTPServer.counter++) + "\"," + "\"list\":[";
+		listed += "{\"name\":\"" + root.name + "\"," + "\"isDir\":\"" + root.isDir + "\"," + "\"val\":\"" + (HTTPServer.counter++) + "\"," + "\"list\":[";
 		if (root.children.size() != 0) {
 			for (int i = 0; i < root.children.size()-1; i++) {
 				FNode Node = root.children.get(i);
 				if (Node.hasChildren) {
 					listed += FNodetoJson(Node) + ", ";
 				} else {
-				listed += "{\"name\":" + "\"" + Node.name + "\"," + "\"val\":\"" + (HTTPServer.counter++) + "\"" + "},";
+					listed += "{\"name\":" + "\"" + Node.name + "\"," + "\"isDir\":\"" + Node.isDir + "\"," + "\"val\":\"" + (HTTPServer.counter++) + "\"" + "},";
 				}
 			}
 			//last one
-			if (root.children.get(root.children.size()-1).hasChildren) {
-				listed += FNodetoJson(root.children.get(root.children.size()-1));
+			FNode lastNode = root.children.get(root.children.size()-1);
+			if (lastNode.hasChildren) {
+				listed += FNodetoJson(lastNode);
 			} else {
-				listed += "{\"name\":" + "\"" + root.children.get(root.children.size()-1).name + "\"," + "\"val\":\"" + (HTTPServer.counter++) + "\"}";
+				listed += "{\"name\":" + "\"" + lastNode.name + "\"," + "\"isDir\":\"" + lastNode.isDir + "\"," + "\"val\":\"" + (HTTPServer.counter++) + "\"}";
 			}
 			listed += "]}";
 		}

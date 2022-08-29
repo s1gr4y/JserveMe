@@ -1,5 +1,7 @@
+//var declarations
 let FileTree = null;
 
+//functions
 function AddLine(id, text) {
 	let element = document.getElementById(id);
 	let node = document.createElement("p");
@@ -8,28 +10,33 @@ function AddLine(id, text) {
 }
 
 function readTree(txtBlk, root, depth) {
-	//let element = document.getElementById(id);
-	//let node1 = document.createElement("li");
-	txtBlk += "<li onclick=RequestDocumentNumber("+root.val+"," + "\""+ root.name+"\""+")>"
+	if (root.isDir === "true") {
+		txtBlk += "<li>"	//onclick=RequestDocumentNumber("+root.val+"," + "\""+ root.name+"\""+")>
+	} else {
+		txtBlk += "<li onclick=RequestDocumentNumber("+root.val+"," + "\""+ root.name+"\""+")> <a href=\"#\">"
+	}
 	let str = "";
 	/*
 	for (let x = 0; x < depth; x++) {
 		str += "--";
 	}
 	*/
-	txtBlk += str + root.name;
+	if (root.isDir === "true") {
+		txtBlk += str + root.name;
+	} else {
+		txtBlk += str + root.name + "</a>";
+	}
 	//id.appendChild(node1);
 	if (typeof root === 'object' && !Array.isArray(root) && root !== null && root.hasOwnProperty('list')) {
+		txtBlk += "<ul>"
 		for (let i = 0; i < root.list.length; i++) {
 			depth += 1;
-			txtBlk += "<ul>"
 			txtBlk = readTree(txtBlk, root.list[i], depth);
 			depth -= 1;
-			txtBlk += "</ul>"
-			
 		}
+		txtBlk += "</ul>"
 	}
-	txtBlk += "</li>"
+	txtBlk += "</li>";
 	return txtBlk;
 }
 
@@ -39,9 +46,7 @@ function request() {
 	xhr.onreadystatechange = function() {
 		if (xhr.readyState == XMLHttpRequest.DONE) {
 			let data = JSON.parse(xhr.responseText);
-			//console.log(data);
-			val = data
-			console.log(val);
+			console.log(data);
 		}
 	};
 	xhr.send(200);
@@ -83,9 +88,8 @@ function RequestDocument(fileName) {
 			//release the reference to the file by revoking the Object URL
 			window.URL.revokeObjectURL(url);
 			a.remove();
-		} else {
+		} else {	//deal with your error state here
 			console.log("err");
-			//deal with your error state here
 		}
 	};
 	xhr.send(200);
@@ -106,24 +110,18 @@ function RequestDocumentNumber(number, fileName) {
 
 	xhr.onload = function() {
 		if (this.status == 200) {
-			// Create a new Blob object using the response data of the onload object
 			var blob = new Blob([this.response], {type: 'image/pdf'});
-			//Create a link element, hide it, direct it towards the blob, and then 'click' it programatically
 			let a = document.createElement("a");
 			a.style = "display: none";
 			document.body.appendChild(a);
-			//Create a DOMString representing the blob and point the link element towards it
 			let url = window.URL.createObjectURL(blob);
 			a.href = url;
 			a.download = fileName;
-			//programatically click the link to trigger the download
 			a.click();
-			//release the reference to the file by revoking the Object URL
 			window.URL.revokeObjectURL(url);
 			a.remove();
 		} else {
 			console.log("err");
-			//deal with your error state here
 		}
 	};
 	xhr.send(200);
@@ -140,13 +138,12 @@ function RequestFileList(fileName) {
 	xhr.open('POST', reqFile);
 	xhr.onreadystatechange = function() {
 		if (xhr.readyState == XMLHttpRequest.DONE) {
-			console.log(xhr.responseText);
+			//console.log(xhr.responseText);
 			let data = JSON.parse(xhr.responseText);
 			for (let i = 0; i < data.length; i++) {
 				AddLine("fileBlock", data[i])
 			}
-			val = data
-			console.log(val);
+			console.log(data);
 			FileTree = data;
 			let deep = 0;
 			let element = document.getElementById("fileBlock");
@@ -154,8 +151,9 @@ function RequestFileList(fileName) {
 			let htmltxtblk = "";
 			htmltxtblk = readTree(htmltxtblk, FileTree, deep);
 			blk.innerHTML = htmltxtblk;
-			console.log(htmltxtblk);
+			//console.log(htmltxtblk);
 			element.append(blk);
+			JSLists.createTree("fileBlock");
 		}
 	};
 	xhr.send(200);
@@ -172,8 +170,7 @@ myTextBox.addEventListener('keypress', function(key) {	//has passed in key so we
 function FileFolderPressed() {
 	RequestFileList("fList/");
 }
+
+
+//code init
 RequestFileList(".");
-//RequestFileList("data/");
-//request();
-//requestResume();
-//request();

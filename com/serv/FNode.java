@@ -7,6 +7,7 @@ public class FNode {
 	public boolean hasChildren = false;
 	public List<FNode> children = new ArrayList<FNode>();
 	public String path = "";
+	public boolean isDir = false;
 
 	public FNode(String data){
 		name = data;
@@ -21,6 +22,13 @@ public class FNode {
 		name = data;
 		index = number;
 		this.path = path;
+	}
+	
+	public FNode(String data, int number, String path, boolean dir) {
+		name = data;
+		index = number;
+		this.path = path;
+		this.isDir = dir;
 	}
 
 	public FNode(String data, List<FNode> child) {
@@ -43,8 +51,14 @@ public class FNode {
 		hasChildren = true;
 	}
 	
+	
 	public void appendStr(String data, int number, String path) {
 		children.add(new FNode(data, number, path));
+		hasChildren = true;
+	}
+	
+	public void appendStr(String data, int number, String path, boolean dir) {
+		children.add(new FNode(data, number, path, dir));
 		hasChildren = true;
 	}
 }
