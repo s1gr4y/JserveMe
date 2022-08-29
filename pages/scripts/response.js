@@ -10,7 +10,7 @@ function AddLine(id, text) {
 function readTree(txtBlk, root, depth) {
 	//let element = document.getElementById(id);
 	//let node1 = document.createElement("li");
-	txtBlk += "<li>"
+	txtBlk += "<li onclick=RequestDocumentNumber("+root.val+"," + "\""+ root.name+"\""+")>"
 	let str = "";
 	/*
 	for (let x = 0; x < depth; x++) {
@@ -65,6 +65,44 @@ function RequestDocument(fileName) {
     };
 
     var json = JSON.stringify(infoStr);
+
+	xhr.onload = function() {
+		if (this.status == 200) {
+			// Create a new Blob object using the response data of the onload object
+			var blob = new Blob([this.response], {type: 'image/pdf'});
+			//Create a link element, hide it, direct it towards the blob, and then 'click' it programatically
+			let a = document.createElement("a");
+			a.style = "display: none";
+			document.body.appendChild(a);
+			//Create a DOMString representing the blob and point the link element towards it
+			let url = window.URL.createObjectURL(blob);
+			a.href = url;
+			a.download = fileName;
+			//programatically click the link to trigger the download
+			a.click();
+			//release the reference to the file by revoking the Object URL
+			window.URL.revokeObjectURL(url);
+			a.remove();
+		} else {
+			console.log("err");
+			//deal with your error state here
+		}
+	};
+	xhr.send(200);
+}
+
+function RequestDocumentNumber(number, fileName) {
+	//event.preventDefault();	//IMPORTATNT LINE: used so we don't redirect to page we request.
+	if (number.length == 0) {
+		return;
+	}
+	let xhr = new XMLHttpRequest();
+	//set the request type to post and the destination url to '/convert'
+	let reqFile = '/getfileindex:' + number;
+	xhr.open('POST', reqFile);
+	//set the reponse type to blob since that's what we're expecting back
+	xhr.responseType = 'blob';
+	xhr.setRequestHeader('Content-Type', 'application/json');
 
 	xhr.onload = function() {
 		if (this.status == 200) {

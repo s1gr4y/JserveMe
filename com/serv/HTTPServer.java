@@ -29,6 +29,7 @@ public class HTTPServer implements Runnable {
 	static final int PORT = 3000;
 	static int fileCount = 0;
 	static int counter = 0;
+	static FNode fileList = null;
 	
 	// verbose mode
 	static final boolean verbose = true;
@@ -154,12 +155,13 @@ public class HTTPServer implements Runnable {
 						out.flush();
 						String fod = fileRequested.substring(13, fileRequested.length());
 						System.out.println("reading folder: " + fod);
+						HTTPServer.fileCount = 0;
+						this.fileList = ReadFilesInDir(fod);
 						HTTPServer.counter = 0;
-						FNode fileList = ReadFilesInDir(fod);
-						//printFNode(fileList);
+						//printFNode(this.fileList);
 						String JsonParsedTree = "";
 						//JsonParsedTree += "{";
-						JsonParsedTree += FNodetoJson(fileList);
+						JsonParsedTree += FNodetoJson(this.fileList);
 						//JsonParsedTree += "}";
 						System.out.println(JsonParsedTree);
 						jsonOut.println(JsonParsedTree);
@@ -172,6 +174,34 @@ public class HTTPServer implements Runnable {
 					System.out.println("here " + f);
 					String dir = ROOT + "/data";
 					File file = new File(dir, f);
+					int fileLength = (int) file.length();
+					//String content = getContentType(fileRequested);
+					if (method.equals("POST") || method.equals("GET")) { // GET method so we return content
+						byte[] fileData = readFileData(file, fileLength);
+						// send HTTP Headers
+						out.println("HTTP/1.1 200 OK");
+						out.println("Server: silen serveme : 1.0");
+						out.println("Date: " + new Date());
+						out.println();
+						out.flush();
+						
+						//send file.
+						dataOut.write(fileData, 0, fileLength);
+						dataOut.flush();
+					}
+				} else if (fileRequested.contains("/getfileindex:")) {	//if this matches, it sends a pdf file to download.
+					System.out.println("in req for file index!!");
+					String f = fileRequested.substring(14, fileRequested.length());
+					int searchIndex = Integer.parseInt(f);
+					String path = searchFNodes(this.fileList, searchIndex);
+					System.out.println("here " + searchIndex);
+					//if null throw no file err.
+					if (path == null) {
+						throw new FileNotFoundException();
+					}
+					File file = new File(path);
+					System.out.println("trying to send " + file.getName());
+					System.out.println("including path " + file.getAbsolutePath());
 					int fileLength = (int) file.length();
 					//String content = getContentType(fileRequested);
 					if (method.equals("POST") || method.equals("GET")) { // GET method so we return content
@@ -302,14 +332,14 @@ public class HTTPServer implements Runnable {
 		} else {
 			folder = new File(path);
 		}
-		FNode root = new FNode(folder.getName(), HTTPServer.fileCount++);
+		FNode root = new FNode(folder.getName(), HTTPServer.fileCount++, folder.getAbsolutePath());
 		//List<String> FileList = new ArrayList<String>();
 		File[] listOfFiles = folder.listFiles();
 		for (int i = 0; i < listOfFiles.length; i++) {
 			if (listOfFiles[i].isFile()) {
 				System.out.println("File " + listOfFiles[i].getName());
 				//FileList.add(listOfFiles[i].getName());
-				root.appendStr(listOfFiles[i].getName(), HTTPServer.fileCount++);
+				root.appendStr(listOfFiles[i].getName(), HTTPServer.fileCount++, listOfFiles[i].getAbsolutePath());
 			} else if (listOfFiles[i].isDirectory()) {
 				System.out.println("Directory " + listOfFiles[i].getName());
 				System.out.println("Directory path: " + listOfFiles[i].getAbsolutePath());
@@ -325,6 +355,22 @@ public class HTTPServer implements Runnable {
 		for (int i = 0; i < root.children.size(); i++) {
 			printFNode(root.children.get(i));
 		}
+	}
+	
+	private String searchFNodes(FNode root, int index) {
+		System.out.println("searching in " + root.path + " it has index " + root.index);
+		System.out.println("want the index " + index);
+		if (root.index == index) {
+			System.out.println("FOUND " + index + " with path of " + root.path +"/"+ root.name);
+			return root.path;
+		}
+		for (int i = 0; i < root.children.size(); i++) {
+			String tmp = searchFNodes(root.children.get(i), index);
+			if(tmp != null) {
+				return tmp;
+			}
+		}
+		return null;
 	}
 	
 	private String FNodetoJson(FNode root) {
