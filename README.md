@@ -7,7 +7,7 @@ A small HTTP file hosting webserver made in Java.
 Users access the site and can download the files within the list provided.\
 The folder the server gets its files from to give to the user is hardcoded in the "./data" folder (users can change the code to where they would prefer).\
 By default the server opens on port 3000, I will make it changeable via commandline argument soon.\
-Internally, there is a n-ary tree to represent the file system, each folder/file has a value associated with it and the tree is represented as FNodes (File Nodes).\
+Internally, there is a n-ary tree to represent the file system, each folder/file has a value associated with it and the tree is represented as FNodes (File Nodes).
 
 ## What's the point?
 It was a utility project I thought of so I can have some of my files "on the cloud" which does not depend on other cloud services.
@@ -25,5 +25,5 @@ To access the server from another device on the same or different network enter 
 Alternatively, you can have it hosted and associated with a domain name.\
 
 # Dependencies
-Credit to TheTechy's small javascript library for having collapseable lists for the UI.\
+Credit to TheTechy's small javascript library for having collapseable lists for the UI.
 [Link](https://github.com/TheTechy/jslists)
