@@ -22,8 +22,9 @@ In your preferred terminal.
 
 With that, the server is up and running! You can access it via entering ```localhost:3000``` in your preferred browser.\
 To access the server from another device on the same or different network enter in your browser: ```IPV4:3000``` or ```[IPV6]:3000``` with the "IP" being the router's public IP V4/V6 address\
-Alternatively, you can have it hosted and associated with a domain name.\
+Alternatively, you can have it hosted and associated with a domain name.
 
 # Dependencies
-Credit to TheTechy's small javascript library for having collapseable lists for the UI.
-[Link](https://github.com/TheTechy/jslists)
+None! This server was written in plain java 8+.\
+Credit to TheTechy's small javascript library for the front-end of collapseable lists for the UI.
+[Link to Repo](https://github.com/TheTechy/jslists)

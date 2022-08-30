@@ -1,22 +1,9 @@
 package com.serv;
 
 import com.serv.FNode;
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.io.Reader;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Date;
-import java.util.StringTokenizer;
 import java.util.*;
 
 public class HTTPServer implements Runnable { 
@@ -100,7 +87,7 @@ public class HTTPServer implements Runnable {
 			System.out.println("method was: " + method);
 			// we get file requested
 			fileRequested = parse.nextToken().toLowerCase();
-			System.out.println("file was: " + fileRequested);
+			System.out.println("req/file was: " + fileRequested);
 			
 			
 			if (!method.equals("POST") && !method.equals("GET") && !method.equals("HEAD")) {
@@ -154,17 +141,15 @@ public class HTTPServer implements Runnable {
 						out.println();
 						out.flush();
 						String fod = fileRequested.substring(13, fileRequested.length());
-						System.out.println("reading folder: " + fod);
+						//System.out.println("reading folder: " + fod);
 						HTTPServer.fileCount = 0;
 						this.fileList = ReadFilesInDir(fod);
 						//printFNode(fileList);
 						HTTPServer.counter = 0;
 						//printFNode(this.fileList);
 						String JsonParsedTree = "";
-						//JsonParsedTree += "{";
 						JsonParsedTree += FNodetoJson(this.fileList);
-						//JsonParsedTree += "}";
-						System.out.println(JsonParsedTree);
+						//System.out.println(JsonParsedTree);
 						jsonOut.println(JsonParsedTree);
 						jsonOut.println();
 						jsonOut.flush();
@@ -172,7 +157,7 @@ public class HTTPServer implements Runnable {
 				} else if (fileRequested.contains("/getfile:")) {	//if this matches, it sends a pdf file to download.
 					System.out.println("in req for file.....");
 					String f = fileRequested.substring(9, fileRequested.length());
-					System.out.println("here " + f);
+					//System.out.println("here " + f);
 					String dir = ROOT + "/data";
 					File file = new File(dir, f);
 					int fileLength = (int) file.length();
@@ -195,14 +180,14 @@ public class HTTPServer implements Runnable {
 					String f = fileRequested.substring(14, fileRequested.length());
 					int searchIndex = Integer.parseInt(f);
 					String path = searchFNodes(this.fileList, searchIndex);
-					System.out.println("here " + searchIndex);
+					//System.out.println("here " + searchIndex);
 					//if null throw no file err.
 					if (path == null) {
 						throw new FileNotFoundException();
 					}
 					File file = new File(path);
-					System.out.println("trying to send " + file.getName());
-					System.out.println("including path " + file.getAbsolutePath());
+					//System.out.println("trying to send " + file.getName());
+					//System.out.println("including path " + file.getAbsolutePath());
 					int fileLength = (int) file.length();
 					//String content = getContentType(fileRequested);
 					if (method.equals("POST") || method.equals("GET")) { // GET method so we return content
@@ -343,12 +328,12 @@ public class HTTPServer implements Runnable {
 		File[] listOfFiles = folder.listFiles();
 		for (int i = 0; i < listOfFiles.length; i++) {
 			if (listOfFiles[i].isFile()) {
-				System.out.println("File " + listOfFiles[i].getName());
+				//System.out.println("File " + listOfFiles[i].getName());
 				//FileList.add(listOfFiles[i].getName());
 				root.appendStr(listOfFiles[i].getName(), HTTPServer.fileCount++, listOfFiles[i].getAbsolutePath(), false);
 			} else if (listOfFiles[i].isDirectory()) {
-				System.out.println("Directory " + listOfFiles[i].getName());
-				System.out.println("Directory path: " + listOfFiles[i].getAbsolutePath());
+				//System.out.println("Directory " + listOfFiles[i].getName());
+				//System.out.println("Directory path: " + listOfFiles[i].getAbsolutePath());
 				//this case we need to recurse call since we need to go into file.
 				root.appendFNode(ReadFilesInDir(listOfFiles[i].getAbsolutePath()));
 			}
@@ -364,8 +349,8 @@ public class HTTPServer implements Runnable {
 	}
 	
 	private String searchFNodes(FNode root, int index) {
-		System.out.println("searching in " + root.path + " it has index " + root.index);
-		System.out.println("want the index " + index);
+		//System.out.println("searching in " + root.path + " it has index " + root.index);
+		//System.out.println("want the index " + index);
 		if (root.index == index) {
 			System.out.println("FOUND " + index + " with path of " + root.path +"/"+ root.name);
 			return root.path;
