@@ -2,18 +2,12 @@
 let FileTree = null;
 
 //functions
-function AddLine(id, text) {
-	let element = document.getElementById(id);
-	let node = document.createElement("p");
-	node.innerText = text;
-	element.appendChild(node);
-}
 
 function readTree(txtBlk, root, depth) {
 	if (root.isDir === "true") {
-		txtBlk += "<li>"	//onclick=RequestDocumentNumber("+root.val+"," + "\""+ root.name+"\""+")>
+		txtBlk += "<li> <span onclick=\"RequestDocumentNumber("+root.val+ "," + "\'"+root.name+"\'"+")\" style=\"cursor: pointer; text-decoration: underline;\">"	//onclick=RequestDocumentNumber("+root.val+"," + "\'"+root.name+"\'"+")>
 	} else {
-		txtBlk += "<li onclick=RequestDocumentNumber("+root.val+"," + "\""+ root.name+"\""+")> <a href=\"#\">"
+		txtBlk += "<li> <span onclick=\"RequestDocumentNumber("+root.val+ "," + "\'"+root.name+"\'"+")\" style=\"cursor: pointer; color:teal; text-decoration: underline;\">"
 	}
 	let str = "";
 	/*
@@ -21,11 +15,11 @@ function readTree(txtBlk, root, depth) {
 		str += "--";
 	}
 	*/
-	if (root.isDir === "true") {
-		txtBlk += str + root.name;
-	} else {
-		txtBlk += str + root.name + "</a>";
-	}
+	//if (root.isDir === "true") {
+		//txtBlk += str + root.name + "</span>";
+	//} else {
+	txtBlk += str + root.name + "</span>";
+	//}
 	//id.appendChild(node1);
 	if (typeof root === 'object' && !Array.isArray(root) && root !== null && root.hasOwnProperty('list')) {
 		txtBlk += "<ul>"
@@ -50,6 +44,22 @@ function request() {
 		}
 	};
 	xhr.send(200);
+}
+
+function sendFile(e) {
+	let xhr = new XMLHttpRequest();
+	let formData = new FormData();
+	let file = e.files[0];      
+
+	//formData.append("title", "---------------------------------------------");	//might not be needed
+	//formData.append("name", file.fileName);	//might not be needed
+	formData.append("file", file);
+
+	xhr.onreadystatechange = state => { 
+		console.log(xhr.status); 
+	}
+	xhr.open("POST", "/savefile:0"); 
+	xhr.send(formData);
 }
 
 function RequestDocument(fileName) {
