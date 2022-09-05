@@ -46,20 +46,76 @@ function request() {
 	xhr.send(200);
 }
 
+function loadFiles(e) {
+	let file = e.files[0];
+	/*
+	let result = null;
+	const loaded = (e) => {
+      const fr = e.target;
+      result = fr.result;
+		//result = "NAME:" + file.name + "\n" + result;
+      console.log('Finished Loading!');
+      console.log('Result:', result);
+	  sendFile(result);
+    }
+	const processFile = (file) => {
+      const fr = new FileReader();
+      fr.readAsDataURL(file);
+      fr.addEventListener('loadend', loaded);
+    }
+	if (file) {
+		processFile(file);
+	}
+	*/
+	sendFile(file);
+}
+
 function sendFile(e) {
 	let xhr = new XMLHttpRequest();
 	let formData = new FormData();
-	let file = e.files[0];      
-
+	//console.log(formData.files[0])
+	let getid = document.getElementById("file");
+	let f = getid.files[0];
+	//xhr.open("POST", "/savefile:0"); 
 	//formData.append("title", "---------------------------------------------");	//might not be needed
 	//formData.append("name", file.fileName);	//might not be needed
-	formData.append("file", file);
+	formData.append("file", f);
+	//console.log(getid.file);
+	//xhr.setRequestHeader('File-Name', file.name);
+	//xhr.setRequestHeader('File-Type', file.type);
 
-	xhr.onreadystatechange = state => { 
-		console.log(xhr.status); 
+	//listen for upload progress
+	xhr.upload.onprogress = function(event) {
+	let percent = Math.round(100 * event.loaded / event.total);
+		console.log(`File is ${percent} uploaded.`);
+	};
+
+	//handle error
+	xhr.upload.onerror = function() {
+		console.log(`Error during the upload: ${xhr.status}.`);
+	};
+
+	//upload completed successfully
+	xhr.onload = function() {
+		console.log('Upload completed successfully.');
+	};
+	
+	
+	///*
+	xhr.onreadystatechange = function() {
+		if (xhr.readyState == XMLHttpRequest.DONE) {
+			let element = document.getElementById("fileBlock");
+			element.innerHTML = "";
+			RequestFileList(".");
+		}
 	}
-	xhr.open("POST", "/savefile:0"); 
-	xhr.send(formData);
+	//fetch('/savefile:0', {method: "POST", body: e});
+	xhr.open("POST", "/savefile:0");
+	xhr.setRequestHeader('File-Name', f.name);
+	xhr.setRequestHeader('Content-Type', f.type);
+	//var blob = new Blob(e);
+	xhr.send(f);	//formData
+	//should have thing to indicate not fully downloaded by server with a loading icon or something until new header is sent. (aka in onreadystatechange, say to user it is done)
 }
 
 function RequestDocument(fileName) {
@@ -84,7 +140,7 @@ function RequestDocument(fileName) {
 	xhr.onload = function() {
 		if (this.status == 200) {
 			// Create a new Blob object using the response data of the onload object
-			var blob = new Blob([this.response], {type: 'image/pdf'});
+			var blob = new Blob([this.response]);
 			//Create a link element, hide it, direct it towards the blob, and then 'click' it programatically
 			let a = document.createElement("a");
 			a.style = "display: none";

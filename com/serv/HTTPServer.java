@@ -4,8 +4,10 @@ import com.serv.FNode;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.util.*;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.TimeUnit;
 
 public class HTTPServer implements Runnable { 
 	static final File ROOT = new File(".");
@@ -16,8 +18,8 @@ public class HTTPServer implements Runnable {
 	static final String METHOD_NOT_SUPPORTED = "not_supported.html";
 	// port to listen connection
 	static final int PORT = 3000;
-	static int fileCount = 0;
-	static int counter = 0;
+	public int fileCount = 0;
+	public int counter = 0;
 	static FNode fileList = null;
 	
 	// verbose mode
@@ -35,9 +37,17 @@ public class HTTPServer implements Runnable {
 			ServerSocket serverConnect = new ServerSocket(PORT);
 			System.out.println("Server started.\nListening for connections on port: " + PORT);
 			
-			// we listen until user halts server execution
+			//listen until user halts server execution
 			while (true) {
 				HTTPServer myServer = new HTTPServer(serverConnect.accept());
+				/*
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					System.out.println("interrupted...?");
+					Thread.currentThread().interrupt();
+				}
+				*/
 				
 				if (verbose) {
 					System.out.println("Connecton opened. (" + new Date() + ")");
@@ -63,8 +73,9 @@ public class HTTPServer implements Runnable {
 		InputStream is1 = null;
 		
 		try {
-			inputStream = connect.getInputStream(); 
+			inputStream = connect.getInputStream();
 			outputStream = connect.getOutputStream();
+			connect.setSoTimeout(10000);	//10 sec timeout on reads
 			//read characters from the client via input stream on the socket (changed in favor of scanner)
 			//in = new BufferedReader(new InputStreamReader(inputStream));
 			//get character output stream to client (for headers)
@@ -81,7 +92,7 @@ public class HTTPServer implements Runnable {
 			inputStream.transferTo(baos);
 			System.out.println("still reading?");
 			//copied stream:
-			is1 = new ByteArrayInputStream(baos.toByteArray()); 
+			is1 = new ByteArrayInputStream(baos.toByteArray());
 			*/
 			
 			//get header and body reading all.
@@ -118,7 +129,7 @@ public class HTTPServer implements Runnable {
 					
 				// we send HTTP Headers with data to client
 				out.println("HTTP/1.1 501 Not Implemented");
-				out.println("Server: silen serveme : 1.0");
+				out.println("Server: JserveMe : 1.0");
 				out.println("Date: " + new Date());
 				out.println("Content-type: " + contentMimeType);
 				out.println("Content-length: " + fileLength);
@@ -136,7 +147,7 @@ public class HTTPServer implements Runnable {
 					if (method.equals("GET")) { // GET method so we return content
 						// send HTTP Headers
 						out.println("HTTP/1.1 200 OK");
-						out.println("Server: silen serveme : 1.0");
+						out.println("Server: JserveMe : 1.0");
 						out.println("Date: " + new Date());
 						out.println();
 						out.flush();
@@ -150,16 +161,16 @@ public class HTTPServer implements Runnable {
 					if (method.equals("POST")) { // GET method so we return content
 						// send HTTP Headers
 						out.println("HTTP/1.1 200 OK");
-						out.println("Server: silen serveme : 1.0");
+						out.println("Server: JserveMe : 1.0");
 						out.println("Date: " + new Date());
 						out.println();
 						out.flush();
 						String fod = fileRequested.substring(13, fileRequested.length());
 						//System.out.println("reading folder: " + fod);
-						HTTPServer.fileCount = 0;
+						this.fileCount = 0;
 						this.fileList = ReadFilesInDir(fod);
 						//printFNode(fileList);
-						HTTPServer.counter = 0;
+						this.counter = 0;
 						//printFNode(this.fileList);
 						String JsonParsedTree = "";
 						JsonParsedTree += FNodetoJson(this.fileList);
@@ -180,7 +191,7 @@ public class HTTPServer implements Runnable {
 						byte[] fileData = readFileData(file, fileLength);
 						// send HTTP Headers
 						out.println("HTTP/1.1 200 OK");
-						out.println("Server: silen serveme : 1.0");
+						out.println("Server: JserveMe : 1.0");
 						out.println("Date: " + new Date());
 						out.println();
 						out.flush();
@@ -210,7 +221,7 @@ public class HTTPServer implements Runnable {
 						byte[] fileData = readFileData(file, fileLength);
 						// send HTTP Headers
 						out.println("HTTP/1.1 200 OK");
-						out.println("Server: silen serveme : 1.0");
+						out.println("Server: JserveMe : 1.0");
 						out.println("Date: " + new Date());
 						out.println();
 						out.flush();
@@ -234,12 +245,12 @@ public class HTTPServer implements Runnable {
 					int fileLength = (int) file.length();
 					//String content = getContentType(fileRequested);
 					if (method.equals("POST") || method.equals("GET")) { // GET method so we return content
-						readBodyToFile(s);
+						readBodyToFile(s, baos, inputStream);
 						//System.out.println("if folder, readFileData fails");
 						//byte[] fileData = readFileData(file, fileLength);
 						// send HTTP Headers
 						out.println("HTTP/1.1 200 OK");
-						out.println("Server: silen serveme : 1.0");
+						out.println("Server: JserveMe : 1.0");
 						out.println("Date: " + new Date());
 						out.println();
 						out.flush();
@@ -247,6 +258,7 @@ public class HTTPServer implements Runnable {
 						//nothing to send back.
 						//dataOut.write(fileData, 0, fileLength);
 						dataOut.flush();
+						System.out.println("DONE!!!!!!!!!!!!!!!!!!!!!!!");
 					}
 				} else {
 					if (fileRequested.endsWith("/")) {
@@ -254,40 +266,47 @@ public class HTTPServer implements Runnable {
 					} else {
 						fileRequested = fileRequested.substring(1, fileRequested.length());
 					}
-					
-					File file = new File(WEB_ROOT, fileRequested);
-					int fileLength = (int) file.length();
-					String content = getContentType(fileRequested);
-					
-					if (method.equals("GET")) { // GET method so we return content
-						byte[] fileData = readFileData(file, fileLength);
+					try {
+						File file = new File(WEB_ROOT, fileRequested);
+						int fileLength = (int) file.length();
+						String content = getContentType(fileRequested);
 						
-						// send HTTP Headers
-						out.println("HTTP/1.1 200 OK");
-						out.println("Server: silen serveme : 1.0");
-						out.println("Date: " + new Date());
-						out.println("Content-type: " + content);
-						out.println("Content-length: " + fileLength);
-						out.println(); // newline between headers and content.
-						out.flush(); // flush character output stream buffer
+						if (method.equals("GET")) { // GET method so we return content
+							byte[] fileData = readFileData(file, fileLength);
+							
+							// send HTTP Headers
+							out.println("HTTP/1.1 200 OK");
+							out.println("Server: JserveMe : 1.0");
+							out.println("Date: " + new Date());
+							out.println("Content-type: " + content);
+							out.println("Content-length: " + fileLength);
+							out.println(); // newline between headers and content.
+							out.flush(); // flush character output stream buffer
+							
+							dataOut.write(fileData, 0, fileLength);
+							dataOut.flush();
+						}
 						
-						dataOut.write(fileData, 0, fileLength);
-						dataOut.flush();
-					}
-					
-					if (verbose) {
-						System.out.println("File " + fileRequested + " of type " + content + " returned");
+						if (verbose) {
+							System.out.println("File " + fileRequested + " of type " + content + " returned");
+						}
+					} catch (FileNotFoundException fnfe) {
+						try {
+							fileNotFound(out, dataOut, fileRequested);
+						} catch (IOException ioe) {
+							System.err.println("Error with file not found exception : " + ioe.getMessage());
+						}
 					}
 				}
 			}
-			
 		} catch (FileNotFoundException fnfe) {
 			try {
 				fileNotFound(out, dataOut, fileRequested);
 			} catch (IOException ioe) {
 				System.err.println("Error with file not found exception : " + ioe.getMessage());
 			}
-			
+		} catch (SocketTimeoutException s) {
+			System.err.println("Socket timed out for more than 10 seconds!");
 		} catch (IOException ioe) {
 			System.err.println("Server error : " + ioe);
 		} finally {
@@ -325,16 +344,20 @@ public class HTTPServer implements Runnable {
 		return fileData;
 	}
 	
-	private void readBodyToFile(String strBlk) throws IOException {	//ByteArrayInputStream baos
+	//notes since the crazy why doesn't my whole file get sent/not read? still unsure... It might be it doesn't read from inputstream fully.
+	//it shouldn't be that the file partically sent to the server. But I'm so lost. on localhost, i can send files but any other computer, file sends partially, or not at all.
+	//9/4 finally figured it out!!!!!!! It is bc the inputstream has not finished, need to get inputstream again until completely done.
+	private void readBodyToFile(String strBlk, ByteArrayOutputStream baos, InputStream inpS) throws IOException {	//ByteArrayInputStream baos
 		//InputStream is = new ByteArrayInputStream(baos.toByteArray());
 		//String s = is.readLine();
 		Scanner scanner = new Scanner(strBlk);
 		boolean breakpoint = false;
 		String body = "";
+		/* //maybe b4 but not now, we send file raw no webkit
 		while (scanner.hasNextLine()) {
 			String line = scanner.nextLine();
 			if (line.contains("------WebKitFormBoundary") && breakpoint == false) {
-				System.out.println("Found break!");
+				//System.out.println("Found break!");
 				breakpoint = true;
 				if (scanner.hasNextLine()) {
 					//scanner.nextLine();
@@ -349,26 +372,122 @@ public class HTTPServer implements Runnable {
 				body += line;
 			}
 		}
-		System.out.println("\n\n\n\n\n\n\nbody text: " + body);
+		*/
+		//System.out.println("\n\n\n\n\n\n\nbody text: " + body);
 		//int newLineIndex = body.indexOf("\n");
 		//String name = body.substring(0, newLineIndex);	//first line
 		//body = body.substring(newLineIndex + 1);
 		//issue is most likely because I put the stream into a string so data was lost or not encoded correctly...need to solve l8r
-		InputStream is = new ByteArrayInputStream(body.getBytes());
 		
-		File file = new File("newFile.jpg");
-		/*
-		try (FileOutputStream outs = new FileOutputStream(file, false)) {
-            int read;
-            byte[] bytes = new byte[8192];
-            while ((read = is.read(bytes)) != -1) {
-                outs.write(bytes, 0, read);
-            }
-			IOUtils.closeQuietly(outStream);
-        }*/
+		InputStream is = new ByteArrayInputStream(baos.toByteArray()); //new ByteArrayInputStream(strBlk.getBytes());
+		///*
+		StringBuilder result = new StringBuilder();
+		StringBuilder result2 = new StringBuilder();
+		long index1 = 0;
+		boolean newline = false;
+		String fileName = "tmp";
+		String fileType = "";
+		int lengthBody = 0;
+		while (is.available() > 0) {
+			byte[] b = new byte[1];
+			//b = (byte) is.read();
+			int didRead = is.read(b, 0, 1);
+			if (didRead == 0) {
+				continue;
+			}
+			result.append((char) b[0]);
+			result2.append((char) b[0]);
+			if (!newline) {
+				if (((char) b[0]) == '\n' && result.toString().isBlank()) {	//checks if we broke from header to body. result.toString().isBlank()	result.toString().contains("------WebKitFormBoundary")
+					System.out.println("bp point!!!!!!");
+					result.setLength(0);
+					newline = true;
+					System.out.println("\n\n\n\n\nread until: " + result2 + "\n\n\n\n\n");
+					result2.setLength(0);
+					break;
+				} else if ((char) b[0] == '\n') {
+					System.out.println("checking " + result.toString());
+					if (result.toString().contains("File-Name:")) {
+						int indexSpace = result.toString().indexOf(' ');
+						String str = result.toString();
+						fileName = str.substring(indexSpace+1, result.length()-2);	//-2 for newline we appended...
+					}//*/
+					if (result.toString().contains("Content-Length:")) {
+						int indexSpace = result.toString().indexOf(' ');
+						String str = result.toString();
+						lengthBody = Integer.parseInt(str.substring(indexSpace+1, result.length()-2));	//-2 for newline we appended...
+					}
+					result.setLength(0);
+				}
+			} else {
+				/*
+				if ((char) b[0] == '\n' && result.toString().contains("NAME:")) {	//result.toString().contains("filename=")
+					int indexSpace = result.toString().indexOf(':');
+					String str = result.toString();
+					fileName = str.substring(indexSpace+1, result.length()-1);	//-2 for newline we appended
+					break;
+				}*/
+				if ((char) b[0] == '\n'){
+					result.setLength(0);
+				}
+			}
+		}
+
+		System.out.println("name: " + fileName + "|");
+		int lastdot = fileName.lastIndexOf('.');
+		//String name = fileName.substring(0, lastdot);
+		//fileType = fileName.substring(lastdot, fileName.length());
+		//System.out.println(fileType);
+		//*/
+		System.out.println("here");
+		File file = new File(DATA_ROOT, fileName);	//DATA_ROOT.getAbsolutePath() + '/' + name + fileType);
+		System.out.println("alive?");
+		//System.out.println("is it : " + istrue);
+		System.out.println("path is: " + file.getAbsolutePath());
+        try {
+			boolean istrue = file.createNewFile();
+		} catch(Exception e) {
+			System.out.println(e);
+		}
+
+		///*
+		long totalRead = 0;
 		try (OutputStream output = new FileOutputStream(file, false)) {
-            is.transferTo(output);
-        }
+			byte[] data = new byte[16384];
+			int nRead = 0;
+			while ((nRead = is.read(data, 0, data.length)) != -1) {
+				output.write(data, 0, nRead);
+				totalRead += nRead;
+			}
+            //is.transferTo(output);
+			if (totalRead < lengthBody) {	//might still have data being written to it, read rest.
+				System.out.println("still have some stuff to read || read " + totalRead + " out of " + lengthBody + ".");
+				while (totalRead < lengthBody) {
+					//data = new byte[16384];
+					//int nRead = 0;
+					while (((nRead = is.read(data, 0, data.length)) != -1)) {	//|| totalRead < lengthBody	//irrelevant to add as it is dictated by is.read...
+						output.write(data, 0, nRead);
+						totalRead += nRead;
+						System.out.println("read " +  nRead + " and total read is now " + totalRead);
+						if ((totalRead >= lengthBody)) {	//required as I don't send a eof or end of stream "is.read() == -1", ergo it waits forever regardless of while loop. (connect.setSoTimeout helps by breaking if 10 sec of nothing sent)
+							break;	//done reading.
+						}
+					}
+					//System.out.println("if false we done. " + (totalRead < lengthBody));
+					if ((totalRead >= lengthBody) ) {
+						is.close();
+						break;
+					}
+					is = connect.getInputStream();
+				}
+				//System.out.println("are we done??????????");
+				//inpS.transferTo(output);
+			}
+        } catch(Exception e) {
+			System.out.println(e);
+			return;	//unsure what else to do.
+		}
+		//*/
 	}
 	
 	private String getContentType(String fileRequested) {
@@ -388,7 +507,7 @@ public class HTTPServer implements Runnable {
 		byte[] fileData = readFileData(file, fileLength);
 		
 		out.println("HTTP/1.1 404 File Not Found");
-		out.println("Server: silen serveme : 1.0");
+		out.println("Server: JserveMe : 1.0");
 		out.println("Date: " + new Date());
 		out.println("Content-type: " + content);
 		out.println("Content-length: " + fileLength);
@@ -415,14 +534,14 @@ public class HTTPServer implements Runnable {
 			isDir = true;
 		}
 		//System.out.println(path + " is " + isDir);
-		FNode root = new FNode(folder.getName(), HTTPServer.fileCount++, folder.getAbsolutePath(), isDir);
+		FNode root = new FNode(folder.getName(), this.fileCount++, folder.getAbsolutePath(), isDir);
 		//List<String> FileList = new ArrayList<String>();
 		File[] listOfFiles = folder.listFiles();
 		for (int i = 0; i < listOfFiles.length; i++) {
 			if (listOfFiles[i].isFile()) {
 				//System.out.println("File " + listOfFiles[i].getName());
 				//FileList.add(listOfFiles[i].getName());
-				root.appendStr(listOfFiles[i].getName(), HTTPServer.fileCount++, listOfFiles[i].getAbsolutePath(), false);
+				root.appendStr(listOfFiles[i].getName(), this.fileCount++, listOfFiles[i].getAbsolutePath(), false);
 			} else if (listOfFiles[i].isDirectory()) {
 				//System.out.println("Directory " + listOfFiles[i].getName());
 				//System.out.println("Directory path: " + listOfFiles[i].getAbsolutePath());
@@ -458,14 +577,14 @@ public class HTTPServer implements Runnable {
 	
 	private String FNodetoJson(FNode root) {
 		String listed = "";
-		listed += "{\"name\":\"" + root.name + "\"," + "\"isDir\":\"" + root.isDir + "\"," + "\"val\":\"" + (HTTPServer.counter++) + "\"," + "\"list\":[";
+		listed += "{\"name\":\"" + root.name + "\"," + "\"isDir\":\"" + root.isDir + "\"," + "\"val\":\"" + (this.counter++) + "\"," + "\"list\":[";
 		if (root.children.size() != 0) {
 			for (int i = 0; i < root.children.size()-1; i++) {
 				FNode Node = root.children.get(i);
 				if (Node.hasChildren) {
 					listed += FNodetoJson(Node) + ", ";
 				} else {
-					listed += "{\"name\":" + "\"" + Node.name + "\"," + "\"isDir\":\"" + Node.isDir + "\"," + "\"val\":\"" + (HTTPServer.counter++) + "\"" + "},";
+					listed += "{\"name\":" + "\"" + Node.name + "\"," + "\"isDir\":\"" + Node.isDir + "\"," + "\"val\":\"" + (this.counter++) + "\"" + "},";
 				}
 			}
 			//last one
@@ -473,7 +592,7 @@ public class HTTPServer implements Runnable {
 			if (lastNode.hasChildren) {
 				listed += FNodetoJson(lastNode);
 			} else {
-				listed += "{\"name\":" + "\"" + lastNode.name + "\"," + "\"isDir\":\"" + lastNode.isDir + "\"," + "\"val\":\"" + (HTTPServer.counter++) + "\"}";
+				listed += "{\"name\":" + "\"" + lastNode.name + "\"," + "\"isDir\":\"" + lastNode.isDir + "\"," + "\"val\":\"" + (this.counter++) + "\"}";
 			}
 			listed += "]}";
 		}
@@ -484,7 +603,7 @@ public class HTTPServer implements Runnable {
 		StringBuilder result = new StringBuilder();
 		do {
 			byte[] b = new byte[1];
-			b[0] = (byte) inputStream.read();
+			int didRead = inputStream.read(b, 0, 1);
 			result.append((char) b[0]);
 			baos.write(b, 0, 1);
 		} while (inputStream.available() > 0);
