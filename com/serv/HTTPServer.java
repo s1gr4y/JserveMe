@@ -3,9 +3,14 @@ package com.serv;
 import com.serv.FNode;
 import java.io.*;
 import java.net.ServerSocket;
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
+import javax.net.ssl.SSLSocket;	//https
+import java.net.*;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.*;
+import java.security.*;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
@@ -17,7 +22,7 @@ public class HTTPServer implements Runnable {
 	static final String FILE_NOT_FOUND = "404.html";
 	static final String METHOD_NOT_SUPPORTED = "not_supported.html";
 	// port to listen connection
-	static final int PORT = 3000;
+	static final int PORT = 3000;	//3000 //443
 	public int fileCount = 0;
 	public int counter = 0;
 	static FNode fileList = null;
@@ -26,31 +31,47 @@ public class HTTPServer implements Runnable {
 	static final boolean verbose = true;
 	
 	// Client Connection via Socket Class
+	//public SSLSocket connect;	//for ssl: SSLSocket
 	private Socket connect;
 	
-	public HTTPServer(Socket c) {
+	public HTTPServer(Socket c) {	//Socket c	//SSLSocket
 		connect = c;
 	}
 	
 	public static void main(String[] args) {
 		try {
-			ServerSocket serverConnect = new ServerSocket(PORT);
+			ServerSocket serverConnect = new ServerSocket(PORT);	//SSLServerSocket(PORT);
+			/*
+			if (System.getProperty("javax.net.ssl.keyStore") == null || System.getProperty("javax.net.ssl.keyStorePassword") == null) {
+				// set keystore store location
+				System.setProperty("javax.net.ssl.keyStore", "server.jks");
+				System.setProperty("javax.net.ssl.keyStorePassword", "password");
+			}
+			SSLServerSocketFactory sslfac = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
+            SSLServerSocket serverConnect = (SSLServerSocket) sslfac.createServerSocket(PORT);
+			*/
 			System.out.println("Server started.\nListening for connections on port: " + PORT);
 			
 			//listen until user halts server execution
 			while (true) {
-				HTTPServer myServer = new HTTPServer(serverConnect.accept());
-				/*
-				try {
-					Thread.sleep(1000);
-				} catch (InterruptedException e) {
-					System.out.println("interrupted...?");
-					Thread.currentThread().interrupt();
-				}
-				*/
+				HTTPServer myServer = new HTTPServer(serverConnect.accept());	//(SSLSocket)
+				//HTTPServer myServer = new HTTPServer((SSLSocket) serverConnect.accept());	//(SSLSocket)
 				
 				if (verbose) {
 					System.out.println("Connecton opened. (" + new Date() + ")");
+					
+					SocketAddress socketAddress = myServer.connect.getRemoteSocketAddress();
+					if (socketAddress instanceof InetSocketAddress) {
+						InetAddress inetAddress = ((InetSocketAddress)socketAddress).getAddress();
+						if (inetAddress instanceof Inet4Address)
+							System.out.println("IPv4: " + inetAddress);
+						else if (inetAddress instanceof Inet6Address)
+							System.out.println("IPv6: " + inetAddress);
+						else
+							System.err.println("Not an IP address.");
+					} else {
+						System.err.println("Not an internet protocol socket.");
+					}
 				}
 				
 				// create dedicated thread to manage the client connection
@@ -58,9 +79,11 @@ public class HTTPServer implements Runnable {
 				thread.start();
 			}
 			
-		} catch (IOException e) {
+		} catch (Exception e) {
+			e.printStackTrace();
+		} /*catch (IOException e) {
 			System.err.println("Server Connection error : " + e.getMessage());
-		}
+		}*/
 	}
 
 	@Override
@@ -115,7 +138,7 @@ public class HTTPServer implements Runnable {
 			System.out.println("req/file was: " + fileRequested);
 			
 			
-			if (!method.equals("POST") && !method.equals("GET") && !method.equals("HEAD")) {
+			if (!method.equals("POST") && !method.equals("GET") && !method.equals("HEAD") && !method.equals("PUT")) {
 				if (verbose) {
 					System.out.println("501 Not Implemented : " + method + " method.");
 				}
@@ -244,7 +267,7 @@ public class HTTPServer implements Runnable {
 					}
 					int fileLength = (int) file.length();
 					//String content = getContentType(fileRequested);
-					if (method.equals("POST") || method.equals("GET")) { // GET method so we return content
+					if (method.equals("POST") || method.equals("GET") || method.equals("PUT")) { // GET method so we return content
 						readBodyToFile(s, baos, inputStream);
 						//System.out.println("if folder, readFileData fails");
 						//byte[] fileData = readFileData(file, fileLength);
@@ -453,7 +476,7 @@ public class HTTPServer implements Runnable {
 		///*
 		long totalRead = 0;
 		try (OutputStream output = new FileOutputStream(file, false)) {
-			byte[] data = new byte[16384];
+			byte[] data = new byte[65536];	//2^14==16484, 2^16==65536
 			int nRead = 0;
 			while ((nRead = is.read(data, 0, data.length)) != -1) {
 				output.write(data, 0, nRead);
@@ -468,8 +491,9 @@ public class HTTPServer implements Runnable {
 					while (((nRead = is.read(data, 0, data.length)) != -1)) {	//|| totalRead < lengthBody	//irrelevant to add as it is dictated by is.read...
 						output.write(data, 0, nRead);
 						totalRead += nRead;
-						System.out.println("read " +  nRead + " and total read is now " + totalRead);
+						//System.out.println("read " +  nRead + " and total read is now " + totalRead);
 						if ((totalRead >= lengthBody)) {	//required as I don't send a eof or end of stream "is.read() == -1", ergo it waits forever regardless of while loop. (connect.setSoTimeout helps by breaking if 10 sec of nothing sent)
+							System.out.println("read all " + totalRead + " bytes");
 							break;	//done reading.
 						}
 					}
@@ -496,6 +520,9 @@ public class HTTPServer implements Runnable {
 		}
 		if (fileRequested.endsWith(".css")) {
 			return "text/css";
+		}
+		if (fileRequested.endsWith(".jpg") || fileRequested.endsWith(".gif") || fileRequested.endsWith(".png")) {
+			return "image/pdf";
 		}
 		return "text/plain";
 	}

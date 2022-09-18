@@ -5,9 +5,9 @@ let FileTree = null;
 
 function readTree(txtBlk, root, depth) {
 	if (root.isDir === "true") {
-		txtBlk += "<li> <span onclick=\"RequestDocumentNumber("+root.val+ "," + "\'"+root.name+"\'"+")\" style=\"cursor: pointer; text-decoration: underline;\">"	//onclick=RequestDocumentNumber("+root.val+"," + "\'"+root.name+"\'"+")>
+		txtBlk += "<li> <span onclick=\"RequestDocumentNumber("+root.val+ "," + "\'"+root.name+"\'"+")\" style=\"cursor: pointer; text-decoration: underline; white-space: nowrap;\">"	//onclick=RequestDocumentNumber("+root.val+"," + "\'"+root.name+"\'"+")>
 	} else {
-		txtBlk += "<li> <span onclick=\"RequestDocumentNumber("+root.val+ "," + "\'"+root.name+"\'"+")\" style=\"cursor: pointer; color:teal; text-decoration: underline;\">"
+		txtBlk += "<li> <span onclick=\"RequestDocumentNumber("+root.val+ "," + "\'"+root.name+"\'"+")\" style=\"cursor: pointer; color:teal; text-decoration: underline; white-space: nowrap;\">"
 	}
 	let str = "";
 	/*
@@ -46,43 +46,10 @@ function request() {
 	xhr.send(200);
 }
 
-function loadFiles(e) {
-	let file = e.files[0];
-	/*
-	let result = null;
-	const loaded = (e) => {
-      const fr = e.target;
-      result = fr.result;
-		//result = "NAME:" + file.name + "\n" + result;
-      console.log('Finished Loading!');
-      console.log('Result:', result);
-	  sendFile(result);
-    }
-	const processFile = (file) => {
-      const fr = new FileReader();
-      fr.readAsDataURL(file);
-      fr.addEventListener('loadend', loaded);
-    }
-	if (file) {
-		processFile(file);
-	}
-	*/
-	sendFile(file);
-}
-
 function sendFile(e) {
 	let xhr = new XMLHttpRequest();
-	let formData = new FormData();
-	//console.log(formData.files[0])
 	let getid = document.getElementById("file");
 	let f = getid.files[0];
-	//xhr.open("POST", "/savefile:0"); 
-	//formData.append("title", "---------------------------------------------");	//might not be needed
-	//formData.append("name", file.fileName);	//might not be needed
-	formData.append("file", f);
-	//console.log(getid.file);
-	//xhr.setRequestHeader('File-Name', file.name);
-	//xhr.setRequestHeader('File-Type', file.type);
 
 	//listen for upload progress
 	xhr.upload.onprogress = function(event) {
@@ -100,22 +67,27 @@ function sendFile(e) {
 		console.log('Upload completed successfully.');
 	};
 	
-	
 	///*
 	xhr.onreadystatechange = function() {
 		if (xhr.readyState == XMLHttpRequest.DONE) {
+			let img = document.getElementById("loadgif");
+			img.style.display = "none";
+			document.getElementById("file").value = "";
 			let element = document.getElementById("fileBlock");
 			element.innerHTML = "";
 			RequestFileList(".");
 		}
 	}
-	//fetch('/savefile:0', {method: "POST", body: e});
-	xhr.open("POST", "/savefile:0");
+	xhr.open("PUT", "/savefile:0");
 	xhr.setRequestHeader('File-Name', f.name);
 	xhr.setRequestHeader('Content-Type', f.type);
-	//var blob = new Blob(e);
-	xhr.send(f);	//formData
-	//should have thing to indicate not fully downloaded by server with a loading icon or something until new header is sent. (aka in onreadystatechange, say to user it is done)
+	xhr.send(f);	//weird err about "Failed to load resource: net::ERR_EMPTY_RESPONSE" but everything still works so :P
+	let x = document.getElementById("loadgif");
+	if (x.style.display === "none") {
+		x.style.display = "block";
+	} else {
+		x.style.display = "none";
+	}
 }
 
 function RequestDocument(fileName) {
@@ -156,9 +128,10 @@ function RequestDocument(fileName) {
 			a.remove();
 		} else {	//deal with your error state here
 			console.log("err");
+			window.location.replace("/404.html");
 		}
 	};
-	xhr.send(200);
+	xhr.send();
 }
 
 function RequestDocumentNumber(number, fileName) {
@@ -187,10 +160,14 @@ function RequestDocumentNumber(number, fileName) {
 			window.URL.revokeObjectURL(url);
 			a.remove();
 		} else {
+			//var blob = new Blob([this.response], {type: 'text/html'});
 			console.log("err");
+			window.location.replace("/404.html");
+			//let fileURL = window.URL.createObjectURL(blob);
+			//window.location.href = fileURL;
 		}
 	};
-	xhr.send(200);
+	xhr.send();
 }
 
 function RequestFileList(fileName) {
@@ -239,4 +216,6 @@ function FileFolderPressed() {
 
 
 //code init
+let onSetGif = document.getElementById("loadgif");
+onSetGif.style.display = 'none';
 RequestFileList(".");

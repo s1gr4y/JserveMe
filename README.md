@@ -6,8 +6,11 @@ A small HTTP file hosting webserver made in Java.
 # How it works
 Users access the site and can download the files within the list provided.\
 The folder the server gets its files from to give to the user is hardcoded in the "./data" folder (users can change the code to where they would prefer).\
-By default the server opens on port 3000, I will make it changeable via commandline argument soon.\
-Internally, there is a n-ary tree to represent the file system, each folder/file has a value associated with it and the tree is represented as FNodes (File Nodes).
+By default the server opens on port 3000 (on HTTPS it is 443), I will make it changeable via commandline argument soon.\
+Internally, there is a n-ary tree to represent the file system, each folder/file has a value associated with it and the tree is represented as FNodes (File Nodes).\
+Create jks from server keys and cert using:\
+```openssl pkcs12 -export -in server.crt -inkey ca.key -inkey server.key -out testkeystore.p12```
+```keytool -importkeystore -srckeystore testkeystore.p12 -srcstoretype pkcs12 -destkeystore server.jks -deststoretype JKS```
 
 ## What's the point?
 It was a utility project I thought of so I can have some of my files "on the cloud" which does not depend on other cloud services.

@@ -4,9 +4,10 @@
     <meta charset="utf-8">
 	<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Head of Page</title>
+    <title>JserveMe</title>
 	<link rel="stylesheet" href="css/style.css">
 	<link rel="stylesheet" href="css/jsLists.css"/>	<!--<link rel="stylesheet" href="css/jsLists.css"/>-->
+	<link rel="icon" type="image/x-icon" href="images/favicon.ico">
 </head>
 
 <body>
@@ -19,7 +20,9 @@
 				To download the files you see, simply click on the text of the file, or
 				you can also get the file by entering the path relative to "data/" and the file at the end (e.g: folder/file).
 			</p>
-			<p>Note: You can not download the whole folder but only individual files at the moment</p>
+			<p>File adding is avaiable! Choose which file to upload below by clicking "choose file".</p>
+			<p>Note: You can not download the whole folder but only individual files at the moment.</p>
+			<p>Note: Expect a delay for bigger file uploads, updates are indicated via "data" folder refresh.</p>
 			<p style="text-align: center; ">Enjoy!</p>
 		</div>
 		<h1>File Directory</h1>
@@ -27,9 +30,10 @@
 			
 		</ul>
 		<input type="text" id="user_inp" placeholder='FileName to download (ex: folder/file.extention)'; autocomplete="off" maxlength="90"></input>
-		<form enctype = "multipart/form-data" onsubmit="return false;" >
+		<form id="form-box" enctype = "multipart/form-data" onsubmit="return false;" >
 			<input id="file" type="file"/>
 			<button id="upload-button" onclick="sendFile(this)"> Upload </button>
+			<img id="loadgif" src="images/load.gif" width="32" alt="loading..."/>
 		</form>
 		<!--<input id="image-file" type="file" onchange="sendFile(this)" >-->
 	</div>
