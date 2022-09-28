@@ -4,20 +4,15 @@ let FileTree = null;
 //functions
 
 function readTree(txtBlk, root, depth) {
+	let tmpStr = root.name;
+	root.name = root.name.replace("'", "\\'");
 	if (root.isDir === "true") {
 		txtBlk += "<li> <span onclick=\"RequestDocumentNumber("+root.val+ "," + "\'"+root.name+"\'"+")\" style=\"cursor: pointer; text-decoration: underline; white-space: nowrap;\">"	//onclick=RequestDocumentNumber("+root.val+"," + "\'"+root.name+"\'"+")>
 	} else {
 		txtBlk += "<li> <span onclick=\"RequestDocumentNumber("+root.val+ "," + "\'"+root.name+"\'"+")\" style=\"cursor: pointer; color:teal; text-decoration: underline; white-space: nowrap;\">"
 	}
 	let str = "";
-	/*
-	for (let x = 0; x < depth; x++) {
-		str += "--";
-	}
-	*/
-	//if (root.isDir === "true") {
-		//txtBlk += str + root.name + "</span>";
-	//} else {
+	root.name = tmpStr;
 	txtBlk += str + root.name + "</span>";
 	//}
 	//id.appendChild(node1);

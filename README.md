@@ -9,7 +9,7 @@ The folder the server gets its files from to give to the user is hardcoded in th
 By default the server opens on port 3000 (on HTTPS it is 443), I will make it changeable via commandline argument soon.\
 Internally, there is a n-ary tree to represent the file system, each folder/file has a value associated with it and the tree is represented as FNodes (File Nodes).\
 Create jks from server keys and cert using:\
-```openssl pkcs12 -export -in server.crt -inkey ca.key -inkey server.key -out testkeystore.p12```
+```openssl pkcs12 -export -in server.crt -inkey ca.key -inkey server.key -out testkeystore.p12```\
 ```keytool -importkeystore -srckeystore testkeystore.p12 -srcstoretype pkcs12 -destkeystore server.jks -deststoretype JKS```
 
 ## What's the point?
