@@ -200,16 +200,46 @@ public class HTTPServer implements Runnable {
 					
 					String dir = ROOT + "/data";
 					File file = new File(dir, f);
-					int fileLength = (int) file.length();
+					long fileLength = (long) file.length();
 					//String content = getContentType(fileRequested);
 					if (method.equals("POST") || method.equals("GET")) { // GET method so we return content
-						byte[] fileData = readFileData(file, fileLength);
 						//send HTTP Headers
 						writeBaseHeader(out);
+						OutputStream outputTmp = new FileOutputStream(file);
+						outputTmp.write("Hello World".getBytes());
+						outputTmp.close();
+						///*
+						
 						
 						//send file.
-						dataOut.write(fileData, 0, fileLength);
+						long start = fileLength;	//avoid overflow, breaks up file in chunks of ~1GB
+						FileInputStream fileIn = null;
+						try {
+							fileIn = new FileInputStream(file);
+							while (start >= 0) {
+								//System.out.println("start is now: " + start);
+								byte[] fileData = null;
+								if (start >= Integer.MAX_VALUE/2) {
+									fileData = new byte[Integer.MAX_VALUE/2];
+								} else {
+									fileData = new byte[(int)start];
+								}
+								fileIn.read(fileData);
+								start -= Integer.MAX_VALUE/2;
+								dataOut.write(fileData);
+								//dataOut.flush();
+							}
+						} finally {
+							if (fileIn != null) {
+								fileIn.close();
+							}
+						}
+
+						//send file.
+						//readFileData(file, fileLength);
+						//dataOut.write(fileData);
 						dataOut.flush();
+						//*/
 					}
 				} else if (fileRequested.contains("/getfileindex:")) {	//if this matches, it sends the req file for download
 					String f = fileRequested.substring(14, fileRequested.length());
@@ -223,16 +253,43 @@ public class HTTPServer implements Runnable {
 						throw new FileNotFoundException();
 					}
 					File file = new File(path);
-					int fileLength = (int) file.length();
+					long fileLength = (long) file.length();	//must be big so overflow is avoided
 					if (method.equals("POST") || method.equals("GET")) { //Post/get method so we return content
 						//System.out.println("if folder, readFileData fails");
-						byte[] fileData = readFileData(file, fileLength);
+						//byte[] fileData = readFileData(file, fileLength);
 						//send HTTP Headers
 						writeBaseHeader(out);
 						
 						//send file.
-						dataOut.write(fileData, 0, fileLength);
+						long start = fileLength;	//avoid overflow, breaks up file in chunks of ~1GB
+						FileInputStream fileIn = null;
+						try {
+							fileIn = new FileInputStream(file);
+							while (start >= 0) {
+								//System.out.println("start is now: " + start);
+								byte[] fileData = null;
+								if (start >= Integer.MAX_VALUE/2) {
+									fileData = new byte[Integer.MAX_VALUE/2];
+								} else {
+									fileData = new byte[(int)start];
+								}
+								fileIn.read(fileData);
+								start -= Integer.MAX_VALUE/2;
+								dataOut.write(fileData);
+								//dataOut.flush();
+							}
+						} finally {
+							if (fileIn != null) {
+								fileIn.close();
+							}
+						}
+
+						
+						//send file.
+						//readFileData(file, fileLength);
+						//dataOut.write(fileData);
 						dataOut.flush();
+						//*/
 					}
 				} else if (fileRequested.contains("/savefile:")) {
 					connect.setSoTimeout(10000);		//set timeout of 10s here since we don't have a buffer to read from but a stream so we don't have a dead thread.
@@ -247,7 +304,7 @@ public class HTTPServer implements Runnable {
 					if (!file.isDirectory()) {
 						throw new FileNotFoundException();	//not correct exception but close enough.
 					}
-					int fileLength = (int) file.length();
+					long fileLength = (long) file.length();
 					//String content = getContentType(fileRequested);
 					if (method.equals("POST") || method.equals("PUT")) { //get method doesn't apply since we send data
 						readBodyToFile(baos);
