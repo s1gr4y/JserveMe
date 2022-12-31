@@ -24,7 +24,7 @@ In your preferred terminal.
 3. Finally, run the output with: ```java -cp ./com/serv; com.serv.HTTPServer```
 
 For files in the data folder that are larger than a gigabyte, the code reads the file in blocks of ~1GB.\
-So, it is recommended to increase the heap size to 3-4GB. It can be done by running with params: ```java -Xms5120M -Xmx5120M -cp ./com/serv; com.serv.HTTPServer```\
+So, it is recommended to increase the heap size to 3-4GB. It can be done by running with params: ```java -Xms5120M -Xmx5120M -cp ./com/serv; com.serv.HTTPServer```
 
 With that, the server is up and running! You can access it via entering ```localhost:3000``` in your preferred browser.\
 To access the server from another device on the same or different network enter in your browser: ```IPV4:3000``` or ```[IPV6]:3000``` with the "IP" being the router's public IP V4/V6 address.\
