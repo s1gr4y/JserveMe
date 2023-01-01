@@ -39,7 +39,7 @@ input[type=text]:focus {border-color: grey;}
 }
 
 .container {
-	width: 800px;
+	width: 1000px;
 	position: relative;
     margin: auto;
 	margin-left: auto;
@@ -63,7 +63,6 @@ h1 {
 	font-family: Helvetica, sans-serif;
     color: #1f1f1e;
     font-size: 20px;
-    width: 800px;
     padding: 8px 20px;
     border: 4px solid #555; /*border: 4px solid #555;*/
     background-color: white;	/*#1C1C1C*/
@@ -76,6 +75,7 @@ h1 {
 	margin-left: auto;
 	margin-top: 1em;
 	margin-bottom: 1em;
+	text-align: center;
 }
 
 .about p {
@@ -87,4 +87,37 @@ h1 {
 	margin-top: 1em;
 	margin-bottom: 1em;
 }
+
+#fileBlock {
+	/*insert styles here*/
+}
+
+
+/*context menu*/
+.context-menu {
+	position: absolute;
+	text-align: center;
+	background: lightgray;
+	border: 1px solid black;
+}
+
+.context-menu ul {
+	padding: 0px;
+	margin: 0px;
+	min-width: 150px;
+	list-style: none;
+}
+
+.context-menu ul li {
+	padding-bottom: 6px;
+	padding-top: 6px;
+	border: 1px solid black;
+}
+
+.context-menu ul li:hover {
+	background: darkgray;
+}
+
+.hidden {display:none;}
+
 

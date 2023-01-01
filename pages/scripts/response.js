@@ -1,5 +1,7 @@
-//var declarations
+//global var declarations
 let FileTree = null;
+let fName = null;
+let fId = null;
 
 //functions
 
@@ -7,9 +9,9 @@ function readTree(txtBlk, root, depth) {
 	let tmpStr = root.name;
 	root.name = root.name.replace("'", "\\'");
 	if (root.isDir === "true") {
-		txtBlk += "<li> <span onclick=\"RequestDocumentNumber("+root.val+ "," + "\'"+root.name+"\'"+")\" style=\"cursor: pointer; text-decoration: underline; white-space: nowrap;\">"	//onclick=RequestDocumentNumber("+root.val+"," + "\'"+root.name+"\'"+")>
+		txtBlk += "<li> <span oncontextmenu=\"ContextMenuOpen(event, "+root.val+ "," + "\'"+root.name+"\'"+")\" onclick=\"RequestDocumentNumber("+root.val+ "," + "\'"+root.name+"\'"+")\" style=\"cursor: pointer; text-decoration: underline; white-space: nowrap;\">"	//onclick=RequestDocumentNumber("+root.val+"," + "\'"+root.name+"\'"+")>
 	} else {
-		txtBlk += "<li> <span onclick=\"RequestDocumentNumber("+root.val+ "," + "\'"+root.name+"\'"+")\" style=\"cursor: pointer; color:teal; text-decoration: underline; white-space: nowrap;\">"
+		txtBlk += "<li> <span oncontextmenu=\"ContextMenuOpen(event, "+root.val+ "," + "\'"+root.name+"\'"+")\" onclick=\"RequestDocumentNumber("+root.val+ "," + "\'"+root.name+"\'"+")\" style=\"cursor: pointer; color:teal; text-decoration: underline; white-space: nowrap;\">"
 	}
 	let str = "";
 	root.name = tmpStr;
@@ -41,7 +43,7 @@ function request() {
 	xhr.send(200);
 }
 
-function sendFile(e) {
+function sendFile(e, loc) {
 	let xhr = new XMLHttpRequest();
 	let getid = document.getElementById("file");
 	let f = getid.files[0];
@@ -73,16 +75,18 @@ function sendFile(e) {
 			RequestFileList(".");
 		}
 	}
-	xhr.open("PUT", "/savefile:0");
+	xhr.open("PUT", "/savefile:" + loc + "");
 	xhr.setRequestHeader('File-Name', f.name);
 	xhr.setRequestHeader('Content-Type', f.type);
 	xhr.send(f);	//weird err about "Failed to load resource: net::ERR_EMPTY_RESPONSE" but everything still works so :P
+	///*
 	let x = document.getElementById("loadgif");
 	if (x.style.display === "none") {
 		x.style.display = "block";
 	} else {
 		x.style.display = "none";
 	}
+	//*/
 }
 
 function RequestDocument(fileName) {
@@ -165,6 +169,30 @@ function RequestDocumentNumber(number, fileName) {
 	xhr.send();
 }
 
+function DeleteDocumentNumber(number, fileName) {
+	//event.preventDefault();	//IMPORTATNT LINE: used so we don't redirect to page we request.
+	if (number.length == 0) {
+		return;
+	}
+	let xhr = new XMLHttpRequest();
+	//set the request type to post and the destination url to '/convert'
+	let reqFile = '/deletefileindex:' + number;
+	xhr.open('DELETE', reqFile);
+	xhr.onload = function() {
+		if (this.status == 204) {
+			console.log("successfully deleted!")
+			let element = document.getElementById("fileBlock");
+			element.innerHTML = "";
+			RequestFileList(".");
+		} else {
+			console.log("err");
+			//window.location.replace("/404.html");
+		}
+	};
+	xhr.send();
+}
+
+
 function RequestFileList(fileName) {
 	//event.preventDefault();	//IMPORTATNT LINE: used so we don't redirect to page we request.
 	if (fileName.length == 0) {
@@ -197,6 +225,50 @@ function RequestFileList(fileName) {
 	xhr.send(200);
 }
 
+function FileFolderPressed() {
+	RequestFileList("fList/");
+}
+
+
+function ContextMenuOpen(e, number, fileName) {	//works, write "event into function pass in to get the event"
+	e.preventDefault();
+	if (document.getElementById("contextMenu").style.display == "block" && fId == number) {	//so it changes context location
+		document.getElementById("contextMenu").style.display = "none";
+	} else {
+		var menu = document.getElementById("contextMenu")
+		menu.style.display = 'block';
+		menu.style.left = e.pageX + "px";
+		menu.style.top = e.pageY + "px";
+	}
+	fName = fileName;	//set globals
+	fId = number;
+}
+
+function DownloadFromUI() {
+	if (fId != null) {
+		RequestDocumentNumber(fId, fName);
+	}
+	fId = null;
+}
+
+function DeleteFromUI() {
+	if (fId != null) {
+		DeleteDocumentNumber(fId, fName);
+	}
+	fId = null;
+}
+
+function UploadFromUI(e) {
+	if (fId != null) {
+		sendFile(e, fId);
+	}
+	fId = null;
+}
+
+
+//code init
+
+/*
 let myTextBox = document.getElementById('user_inp');
 myTextBox.addEventListener('keypress', function(key) {	//has passed in key so we know if it is 'enter'
 	if (key.keyCode == 13) {	//keyCode for enter
@@ -204,13 +276,14 @@ myTextBox.addEventListener('keypress', function(key) {	//has passed in key so we
 		myTextBox.value= '';
 	}
 });
-
-function FileFolderPressed() {
-	RequestFileList("fList/");
-}
-
-
-//code init
+*/
 let onSetGif = document.getElementById("loadgif");
 onSetGif.style.display = 'none';
+
 RequestFileList(".");
+
+
+document.addEventListener("click", checkDefaultUI);
+function checkDefaultUI() {
+  document.getElementById("contextMenu").style.display = "none";
+}

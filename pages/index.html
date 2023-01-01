@@ -16,27 +16,47 @@
 		<div class="about">
 			<p>Welcome to my instance of JserveMe!</p>
 			<p>Click the "data" folder to expand it and view its contents.</p>
-			<p>
-				To download the files you see, simply click on the text of the file, or
-				you can also get the file by entering the path relative to "data/" and the file at the end (e.g: folder/file).
-			</p>
+			<p>To download the files you see, simply click on the text of the file, or right click for dropdown menu.</p>
+			<p>You can also get the file by entering the path relative to "data/" and the file at the end (e.g: folder/file).</p>
 			<p>File adding is avaiable! Choose which file to upload below by clicking "choose file".</p>
 			<p>Note: You can not download the whole folder but only individual files at the moment.</p>
 			<p>Note: Expect a delay for bigger file uploads, updates are indicated via "data" folder refresh.</p>
-			<p style="text-align: center; ">Enjoy!</p>
+			<p>Enjoy!</p>
 		</div>
 		<h1>File Directory</h1>
 		<ul id="fileBlock" class="jslists">
 			
 		</ul>
+		<!--
+		
 		<input type="text" id="user_inp" placeholder='FileName to download (ex: folder/file.extention)'; autocomplete="off" maxlength="90"></input>
 		<form id="form-box" enctype = "multipart/form-data" onsubmit="return false;" >
 			<input id="file" type="file"/>
-			<button id="upload-button" onclick="sendFile(this)"> Upload </button>
+			<button id="upload-button" onclick="sendFile(this, 0)"> Upload </button>
 			<img id="loadgif" src="images/load.gif" width="32" alt="loading..."/>
 		</form>
+		
+		-->
+		<img id="loadgif" src="images/load.gif" width="32" alt="loading..."/>
 		<!--<input id="image-file" type="file" onchange="sendFile(this)" >-->
 	</div>
+	
+	
+	
+	<!--unique context menu-->
+	<div id="contextMenu" class="context-menu" style="display:none">
+        <ul>
+            <li> <span onclick="DownloadFromUI()" style="cursor: pointer;">Download Folder/File</span> </li>
+            <li> <span onclick="DeleteFromUI()" style="cursor: pointer;">Delete Folder/File</span> </li>
+			<li> <label for="file"> Upload file to Folder</label></li>
+			<li> <span style="cursor: pointer;">Create Folder (does nothing)</span> </li>
+        </ul>
+    </div>
+	<form id="form-box" enctype = "multipart/form-data" onsubmit="return false;" >
+		<input id="file" type="file" class="hidden" onchange="UploadFromUI(this)">
+	</form>
+	
+	
 </body>
 	<script src="scripts/response.js"></script>
 	<script src="scripts/jsLists.js"></script>	<!--helper js for the UI--> <!--<script src="scripts/jsLists.js"></script>-->

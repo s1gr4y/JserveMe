@@ -137,7 +137,7 @@ public class HTTPServer implements Runnable {
 			System.out.println("req/file was: " + fileRequested);
 			
 			
-			if (!method.equals("POST") && !method.equals("GET") && !method.equals("HEAD") && !method.equals("PUT")) {
+			if (!method.equals("POST") && !method.equals("GET") && !method.equals("HEAD") && !method.equals("DELETE") && !method.equals("PUT")) {
 				if (verbose) {
 					System.out.println("501 Not Implemented : " + method + " method.");
 				}
@@ -255,6 +255,11 @@ public class HTTPServer implements Runnable {
 					File file = new File(path);
 					long fileLength = (long) file.length();	//must be big so overflow is avoided
 					if (method.equals("POST") || method.equals("GET")) { //Post/get method so we return content
+					
+						if (file.isDirectory()) {
+							throw new FileNotFoundException();	//forces 404 on client side.
+						}
+						
 						//System.out.println("if folder, readFileData fails");
 						//byte[] fileData = readFileData(file, fileLength);
 						//send HTTP Headers
@@ -307,7 +312,7 @@ public class HTTPServer implements Runnable {
 					long fileLength = (long) file.length();
 					//String content = getContentType(fileRequested);
 					if (method.equals("POST") || method.equals("PUT")) { //get method doesn't apply since we send data
-						readBodyToFile(baos);
+						readBodyToFile(baos, file);	//pass folder where to save it
 						//send HTTP Headers
 						writeBaseHeader(out);
 						
@@ -315,6 +320,41 @@ public class HTTPServer implements Runnable {
 						//dataOut.write(fileData, 0, fileLength);
 						//dataOut.flush();
 					}
+				} else if (fileRequested.contains("/deletefileindex:")) {	//delete file
+					String f = fileRequested.substring(17, fileRequested.length());
+					int searchIndex = Integer.parseInt(f);
+					String path = searchFNodes(this.fileList, searchIndex);	//also might consider having a list of FNodes alongside the tree for quick indexing.
+					//System.out.println("here " + path);
+					
+					//if null throw no file err.
+					if (path == null || searchIndex == 0) {	//can't delete the root data folder
+						System.out.println("nulled");
+						throw new FileNotFoundException();
+					}
+					
+					File file = new File(path);
+					boolean res = false;
+					if (file.isDirectory()) {
+						res = deleteFolder(file);
+						file.delete();
+					} else {
+						res = deleteFile(file);
+					}
+					
+					if (res) {
+						out.println("HTTP/1.1 204 No Content");
+						out.println("Server: JserveMe : 1.0");
+						out.println("Date: " + new Date());
+						out.println();
+						out.flush();
+					} else {	//couldn't delete for whatever reason so err code.
+						out.println("HTTP/1.1 500 Internal Server Error");
+						out.println("Server: JserveMe : 1.0");
+						out.println("Date: " + new Date());
+						out.println();
+						out.flush();
+					}
+					
 				} else {
 					if (fileRequested.endsWith("/")) {
 						fileRequested += DEFAULT_FILE;
@@ -400,7 +440,7 @@ public class HTTPServer implements Runnable {
 	}
 	
 	//9/4 finally figured out that the inputstream has not finished, need to keep a reading from inputstream again until completely done, set timeout in case they lose internet/etc.
-	private void readBodyToFile(ByteArrayOutputStream baos) throws IOException {	//ByteArrayInputStream baos
+	private void readBodyToFile(ByteArrayOutputStream baos, File folder) throws IOException {	//ByteArrayInputStream baos
 		boolean breakpoint = false;
 		String body = "";
 		
@@ -451,7 +491,8 @@ public class HTTPServer implements Runnable {
 		//String name = fileName.substring(0, lastdot);
 		//fileType = fileName.substring(lastdot, fileName.length());
 		//System.out.println(fileType);
-		File file = new File(DATA_ROOT, fileName);	//DATA_ROOT.getAbsolutePath() + '/' + name + fileType);
+		//File file = new File(DATA_ROOT, fileName);
+		File file = new File(folder, fileName);	//DATA_ROOT.getAbsolutePath() + '/' + name + fileType);
 		//System.out.println("path is: " + file.getAbsolutePath());
         try {
 			boolean istrue = file.createNewFile();
@@ -633,4 +674,28 @@ public class HTTPServer implements Runnable {
 		} while (inputStream.available() > 0);
 		return result.toString();
 	}
+	
+	private boolean deleteFile(File file) {
+		if (file.delete()) { 
+		  System.out.println("Deleted file: " + file.getName());
+		  return true;
+		} else {
+		  System.out.println("Failed to delete file.");
+		  return false;
+		} 
+		
+	}
+	
+	private boolean deleteFolder(File folder) {
+		for (File file : folder.listFiles()) {
+            if (file.isDirectory()) {
+                deleteFolder(file);
+            }
+            if (!file.delete()) {
+				return false;
+			}
+        }
+		return true;
+	}
+	
 }
