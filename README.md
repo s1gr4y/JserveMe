@@ -21,7 +21,7 @@ Users can make their own instance and have their own data to share with others o
 In your preferred terminal.
 1. git clone this repository.
 2. In the JserveMe directory (the cloned repo), run ```javac com/serv/*.java```
-3. Finally, run the output with: ```java -cp ./com/serv; com.serv.HTTPServer```
+3. Finally, run the output with: ```java com/serv/HTTPServer -cp ./com/serv;```
 
 For files in the data folder that are larger than a gigabyte, the code reads the file in blocks of ~1GB.\
 So, it is recommended to increase the heap size to 3-4GB. It can be done by running with params: ```java -Xms5120M -Xmx5120M -cp ./com/serv; com.serv.HTTPServer```

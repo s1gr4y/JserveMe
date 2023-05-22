@@ -133,7 +133,7 @@ public class HTTPServer implements Runnable {
 			String method = parse.nextToken().toUpperCase();
 			System.out.println("method was: " + method);
 			// we get file requested
-			fileRequested = parse.nextToken().toLowerCase();
+			fileRequested = parse.nextToken();
 			System.out.println("req/file was: " + fileRequested);
 			
 			

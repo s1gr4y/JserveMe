@@ -200,7 +200,7 @@ function RequestFileList(fileName) {
 	}
 	let xhr = new XMLHttpRequest();
 	//set the request type to post and the destination url to '/convert'
-	let reqFile = '/getFileList:' + fileName;
+	let reqFile = '/getfilelist:' + fileName;
 	xhr.open('POST', reqFile);
 	xhr.onreadystatechange = function() {
 		if (xhr.readyState == XMLHttpRequest.DONE) {
